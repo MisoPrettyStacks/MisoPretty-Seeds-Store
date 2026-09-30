@@ -8,7 +8,7 @@ services:
     name: misopretty-seeds-store
     runtime: node
     plan: free
-    buildCommand: npm install -g pnpm && pnpm install && pnpm run build
+    buildCommand: corepack prepare pnpm@10 --activate && pnpm install && pnpm run build
     startCommand: node artifacts/api-server/dist/index.mjs
     healthCheckPath: /api/healthz
     envVars:
