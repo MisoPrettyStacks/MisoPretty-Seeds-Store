@@ -1,0 +1,14 @@
+MisoPretty Seeds — product image licenses
+==========================================
+All 8 images are verified royalty-free for commercial use, no attribution required.
+
+- common-sunflower.jpg / mammoth-sunflower.jpg : CC0, via Wikimedia Commons
+- cosmos.jpg        : Public domain, via Wikimedia Commons
+- nasturtium.jpg    : verified Public Domain / CC0, via Wikimedia Commons
+- poppy.jpg         : verified Public Domain / CC0, via Wikimedia Commons
+- lavender.jpg      : verified Public Domain / CC0, via Wikimedia Commons
+- flower-mystery-1.jpg (dahlia)     : verified Public Domain / CC0, via Wikimedia Commons
+- flower-mystery-2.jpg (coneflower)  : verified Public Domain / CC0, via Wikimedia Commons
+
+Source library: Seed Packet Studio photo library — every photo individually
+verified via the Wikimedia Commons API as Public Domain or CC0.

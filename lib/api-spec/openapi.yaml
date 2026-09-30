@@ -1,0 +1,355 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: storefront
+    description: MisoPretty Seeds storefront and checkout
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /store/products:
+    get:
+      operationId: listStoreProducts
+      tags: [storefront]
+      summary: List active seed products
+      responses:
+        "200":
+          description: Store product catalog
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StoreProduct"
+        "503":
+          description: Store catalog is temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /store/shipping-options:
+    get:
+      operationId: listShippingOptions
+      tags: [storefront]
+      summary: List available US shipping methods
+      responses:
+        "200":
+          description: Available shipping methods and their configured flat rates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShippingOption"
+  /store/quote:
+    post:
+      operationId: getCartQuote
+      tags: [storefront]
+      summary: Calculate a cart total using server-owned prices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartQuoteInput"
+      responses:
+        "200":
+          description: Validated subtotal, shipping, and total
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartQuote"
+        "400":
+          description: Invalid cart or shipping option
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Store catalog is temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /store/checkout:
+    post:
+      operationId: createCheckoutSession
+      tags: [storefront]
+      summary: Create a Stripe Checkout session for a validated cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutInput"
+      responses:
+        "200":
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutSession"
+        "400":
+          description: Invalid customer, address, cart, or shipping option
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Checkout is temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /store/checkout/{sessionId}:
+    get:
+      operationId: getCheckoutConfirmation
+      tags: [storefront]
+      summary: Retrieve a paid order confirmation
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Paid checkout confirmation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderConfirmation"
+        "404":
+          description: Checkout session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Checkout is not paid yet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    StoreProduct:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Stable product slug used by the cart
+        name:
+          type: string
+        description:
+          type: string
+        priceInCents:
+          type: integer
+          minimum: 0
+        currency:
+          type: string
+          enum: [usd]
+        imageUrl:
+          type: string
+        seedCount:
+          type: string
+        growingNotes:
+          type: string
+      required: [id, name, description, priceInCents, currency, imageUrl, seedCount, growingNotes]
+    ShippingOption:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        amountInCents:
+          type: integer
+          minimum: 0
+        deliveryEstimate:
+          type: string
+      required: [id, name, description, amountInCents, deliveryEstimate]
+    CartItemInput:
+      type: object
+      properties:
+        productId:
+          type: string
+          minLength: 1
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 99
+      required: [productId, quantity]
+    CartQuoteInput:
+      type: object
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items:
+            $ref: "#/components/schemas/CartItemInput"
+        shippingOptionId:
+          type: string
+          minLength: 1
+      required: [items, shippingOptionId]
+    QuoteLine:
+      type: object
+      properties:
+        productId:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        unitAmountInCents:
+          type: integer
+          minimum: 0
+        lineTotalInCents:
+          type: integer
+          minimum: 0
+      required: [productId, name, quantity, unitAmountInCents, lineTotalInCents]
+    CartQuote:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuoteLine"
+        subtotalInCents:
+          type: integer
+          minimum: 0
+        shippingInCents:
+          type: integer
+          minimum: 0
+        totalInCents:
+          type: integer
+          minimum: 0
+        currency:
+          type: string
+          enum: [usd]
+        shippingOption:
+          $ref: "#/components/schemas/ShippingOption"
+      required: [items, subtotalInCents, shippingInCents, totalInCents, currency, shippingOption]
+    CustomerInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        email:
+          type: string
+          format: email
+          maxLength: 254
+      required: [name, email]
+    ShippingAddress:
+      type: object
+      properties:
+        line1:
+          type: string
+          minLength: 1
+          maxLength: 200
+        line2:
+          type: ["string", "null"]
+          maxLength: 200
+        city:
+          type: string
+          minLength: 1
+          maxLength: 100
+        state:
+          type: string
+          minLength: 2
+          maxLength: 2
+        postalCode:
+          type: string
+          minLength: 5
+          maxLength: 10
+        country:
+          type: string
+          enum: [US]
+      required: [line1, city, state, postalCode, country]
+    CheckoutInput:
+      allOf:
+        - $ref: "#/components/schemas/CartQuoteInput"
+        - type: object
+          properties:
+            customer:
+              $ref: "#/components/schemas/CustomerInfo"
+            address:
+              $ref: "#/components/schemas/ShippingAddress"
+          required: [customer, address]
+    CheckoutSession:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        checkoutUrl:
+          type: string
+          format: uri
+      required: [sessionId, checkoutUrl]
+    OrderConfirmation:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        status:
+          type: string
+          enum: [paid]
+        email:
+          type: string
+          format: email
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuoteLine"
+        subtotalInCents:
+          type: integer
+          minimum: 0
+        shippingInCents:
+          type: integer
+          minimum: 0
+        totalInCents:
+          type: integer
+          minimum: 0
+        currency:
+          type: string
+          enum: [usd]
+      required: [sessionId, status, email, items, subtotalInCents, shippingInCents, totalInCents, currency]
+

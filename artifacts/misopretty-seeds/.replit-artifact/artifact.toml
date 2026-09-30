@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "MisoPretty Seeds"
+description = "A small-batch flower seed storefront with the full eight-variety catalog, a working cart and shipping-aware checkout, and Stripe test-mode payments."
+version = "1.0.0"
+id = "artifacts/misopretty-seeds"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20488
+
+[services.development]
+run = "pnpm --filter @workspace/misopretty-seeds run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/misopretty-seeds", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/misopretty-seeds/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20488"
+BASE_PATH = "/"
