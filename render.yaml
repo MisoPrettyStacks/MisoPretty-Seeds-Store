@@ -1,0 +1,18 @@
+# Render Blueprint — one-click deploy for the MisoPretty Seeds store.
+# In Render: New → Blueprint → select the MisoPretty-Seeds-Store repo.
+# STRIPE_SECRET_KEY can be added later via the Render dashboard
+# (dashboard → service → Environment); the shop runs without it and
+# checkout shows a friendly "temporarily unavailable" message until set.
+services:
+  - type: web
+    name: misopretty-seeds-store
+    runtime: node
+    plan: free
+    buildCommand: npm install -g pnpm && pnpm install && pnpm run build
+    startCommand: node artifacts/api-server/dist/index.mjs
+    healthCheckPath: /api/healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: STRIPE_SECRET_KEY
+        sync: false
